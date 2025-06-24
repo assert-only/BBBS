@@ -1,0 +1,121 @@
+<launch>
+
+  <!-- AMCL定位算法，基础参数(机器人初始位置) -->
+  <arg name="initial_pose_x"  default="0.0"/>
+  <arg name="initial_pose_y"  default="0.0"/>
+  <arg name="initial_pose_a"  default="0.0"/>
+
+  <!-- 迷你机器人，基础参数 -->
+  <arg name="robot_name" default="tianbot_mini" />
+  <arg name="scan_topic" default="scan" />
+  <arg name="odom_topic" default="odom" />
+  <arg name="cmd_vel_topic" default="cmd_vel" />
+
+  <!-- TF坐标变换，基础参数 -->
+  <arg name="laser_frame_id" default="$(arg robot_name)/laser" />
+  <arg name="global_frame_id" default="$(arg robot_name)/map" />
+  <arg name="base_frame_id" default="$(arg robot_name)/base_link" />
+  <arg name="odom_frame_id" default="$(arg robot_name)/odom" />
+
+  <!-- map file -->
+  <arg name="map" default="$(find tianbot_mini)/maps/map.yaml" />
+
+  <group ns="$(arg robot_name)">
+    <!-- Map服务器，加载*.yaml地图 -->
+    <node pkg="map_server" type="map_server" name="map_server" args="$(arg map)">
+      <param name="frame_id" value="$(arg robot_name)/map" />
+    </node>
+
+    <!-- AMCL蒙特卡罗定位算法，估算机器人的位置 -->
+    <node pkg="amcl" type="amcl" name="amcl">
+      <param name="use_map_topic"             value="true"/>
+      <!-- Publish scans from best pose at a max of 10 Hz -->
+      <param name="odom_model_type"           value="diff"/>
+      <param name="odom_alpha5"               value="0.1"/>
+      <param name="gui_publish_rate"          value="10.0"/>
+      <param name="laser_max_beams"             value="60"/>
+      <param name="laser_max_range"           value="4.5"/>
+      <param name="min_particles"             value="500"/>
+      <param name="max_particles"             value="2000"/>
+      <param name="kld_err"                   value="0.05"/>
+      <param name="kld_z"                     value="0.99"/>
+      <param name="odom_alpha1"               value="0.2"/>
+      <param name="odom_alpha2"               value="0.2"/>
+      <!-- translation std dev, m -->
+      <param name="odom_alpha3"               value="0.2"/>
+      <param name="odom_alpha4"               value="0.2"/>
+      <param name="laser_z_hit"               value="0.5"/>
+      <param name="laser_z_short"             value="0.05"/>
+      <param name="laser_z_max"               value="0.05"/>
+      <param name="laser_z_rand"              value="0.5"/>
+      <param name="laser_sigma_hit"           value="0.2"/>
+      <param name="laser_lambda_short"        value="0.1"/>
+      <param name="laser_model_type"          value="likelihood_field"/>
+      <!-- <param name="laser_model_type" value="beam"/> -->
+      <param name="laser_likelihood_max_dist" value="2.0"/>
+      <param name="update_min_d"              value="0.25"/>
+      <param name="update_min_a"              value="0.2"/>
+      <param name="odom_frame_id"             value="$(arg odom_frame_id)"/> 
+      <param name="base_frame_id"             value="$(arg base_frame_id)"/> 
+      <param name="global_frame_id"           value="$(arg global_frame_id)"/>
+      <param name="resample_interval"         value="1"/>
+      <!-- Increase tolerance because the computer can get quite busy -->
+      <param name="transform_tolerance"       value="1.0"/>
+      <param name="recovery_alpha_slow"       value="0.0"/>
+      <param name="recovery_alpha_fast"       value="0.0"/>
+      <param name="initial_pose_x"            value="$(arg initial_pose_x)"/>
+      <param name="initial_pose_y"            value="$(arg initial_pose_y)"/>
+      <param name="initial_pose_a"            value="$(arg initial_pose_a)"/>
+      <remap from="scan"                      to="$(arg scan_topic)"/>
+    </node>
+  </group>
+</launch>
+
+
+
+
+
+
+
+
+
+
+<!-- 粒子滤波设置 -->
+<param name="min_particles" value="1000"/>
+<param name="max_particles" value="3500"/>
+<!-- 表示允许的误差范围（ε），也就是你愿意接受多大的采样误差  -->
+<!-- 0.01 意味着你允许最多 1% 的定位误差 -->
+<param name="kld_err" value="0.01"/>
+<!-- 表示置信度（1 − δ），即你有多大把握在允许误差范围内生成足够的粒子 -->
+<param name="kld_z" value="0.99"/>
+
+<!-- 雷达建模参数 -->
+<!-- laser_model_type可选项有两个:likelihood_field:似然场模型、beam:光束模型 -->
+<param name="laser_model_type" value="likelihood_field"/>
+<param name="laser_max_range" value="8.0"/> <!-- 视 LTME-02A 最大量程而定 -->
+<param name="laser_max_beams" value="80"/>
+<!-- laser_sigma_hit 反映了激光雷达测距时的噪声大小，即激光束测量误差的标准差 -->
+<param name="laser_sigma_hit" value="0.2"/>
+<!-- 表示激光束正确测量环境时的权重，数值越大，越相信地图匹配的激光数据 -->
+<param name="laser_z_hit" value="0.75"/>
+<!-- 用于描述激光数据中随机噪声和不可预测的误差成分，权重越大，算法对异常激光测量的容忍度越高 -->
+<param name="laser_z_rand" value="0.25"/>
+<!-- 最大考虑的激光测距匹配距离 -->
+<param name="laser_likelihood_max_dist" value="2.0"/>
+
+<!-- 位姿更新频率 -->
+<param name="update_min_d" value="0.05"/>  <!-- 每5cm移动就更新 -->
+<param name="update_min_a" value="0.05"/>  <!-- 每3°转角就更新 -->
+<param name="resample_interval" value="1"/>
+
+<!-- 运动模型（更小不确定性） -->
+<param name="odom_model_type" value="diff"/>
+<param name="odom_alpha1" value="0.05"/>
+<param name="odom_alpha2" value="0.05"/>
+<param name="odom_alpha3" value="0.1"/>
+<param name="odom_alpha4" value="0.1"/>
+<param name="odom_alpha5" value="0.01"/>
+
+<!-- 发布频率与容差 -->
+<param name="gui_publish_rate" value="20.0"/>
+<param name="transform_tolerance" value="0.3"/> <!-- 保证 TF 容差不过大 -->
