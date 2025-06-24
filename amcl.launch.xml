@@ -12,6 +12,8 @@
   <arg name="cmd_vel_topic" default="cmd_vel" />
 
   <!-- TF坐标变换，基础参数 -->
+  <!-- rosrun tf view_frames -->
+  <!-- 它会生成一个 frames.pdf 图，展示所有 TF 坐标系的结构和连接关系。这个工具非常有助于调试和理解 frame_id 设置是否正确。你也可以把这个结构图发给我，我帮你分析 -->
   <arg name="laser_frame_id" default="$(arg robot_name)/laser" />
   <arg name="global_frame_id" default="$(arg robot_name)/map" />
   <arg name="base_frame_id" default="$(arg robot_name)/base_link" />
@@ -23,6 +25,7 @@
   <group ns="$(arg robot_name)">
     <!-- Map服务器，加载*.yaml地图 -->
     <node pkg="map_server" type="map_server" name="map_server" args="$(arg map)">
+      <!-- frame_id 必须和 AMCL 的 global_frame_id 一致（如：robot/map），否则 TF 报错 -->
       <param name="frame_id" value="$(arg robot_name)/map" />
     </node>
 
